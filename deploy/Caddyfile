@@ -1,0 +1,29 @@
+64-23-141-85.nip.io {
+	handle /videos/* {
+		uri strip_prefix /videos
+		root * /home/clawdbot/remotion-video/out
+		file_server
+	}
+	handle /upload {
+		reverse_proxy localhost:3456
+	}
+	handle /upload-button.js {
+		reverse_proxy localhost:3456
+	}
+	handle /files/* {
+		reverse_proxy localhost:3456
+	}
+	handle {
+		reverse_proxy localhost:4180
+	}
+	header X-DO-MARKETPLACE "clawdbot"
+}
+
+64-23-141-85.nip.io:8443 {
+	reverse_proxy localhost:4181
+	header X-DO-MARKETPLACE "clawdbot"
+}
+
+64.23.141.85 {
+	redir https://64-23-141-85.nip.io{uri} permanent
+}

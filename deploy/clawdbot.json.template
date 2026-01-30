@@ -1,0 +1,73 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.1.24-1",
+    "lastTouchedAt": "2026-01-29T19:37:05.493Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-01-29T19:36:12.532Z",
+    "lastRunVersion": "2026.1.24-1",
+    "lastRunCommand": "doctor",
+    "lastRunMode": "local"
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "anthropic/claude-opus-4-5"
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      },
+      "sandbox": {
+        "mode": "all",
+        "workspaceAccess": "rw",
+        "docker": {
+          "network": "bridge",
+          "binds": [
+            "/home/clawdbot/homebrew:/home/clawdbot/homebrew:ro"
+          ]
+        }
+      }
+    }
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions"
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto"
+  },
+  "gateway": {
+    "mode": "local",
+    "bind": "loopback",
+    "trustedProxies": [
+      "127.0.0.1"
+    ],
+    "remote": {
+      "token": "<GATEWAY_TOKEN>"
+    },
+    "auth": {
+      "token": "<GATEWAY_TOKEN>"
+    },
+    "controlUi": {
+      "allowInsecureAuth": true
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true
+      }
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "<TELEGRAM_BOT_TOKEN>",
+      "dmPolicy": "allowlist",
+      "allowFrom": [
+        "7808191835"
+      ]
+    }
+  }
+}

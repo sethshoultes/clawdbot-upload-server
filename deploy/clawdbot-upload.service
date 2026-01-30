@@ -1,0 +1,18 @@
+[Unit]
+Description=ClawdBot Upload Server
+After=network.target
+
+[Service]
+Type=simple
+User=clawdbot
+Group=clawdbot
+WorkingDirectory=/home/clawdbot/upload-server
+Environment="PUBLIC_BASE_URL=https://64-23-141-85.nip.io"
+ExecStart=/usr/bin/node /home/clawdbot/upload-server/server.js
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
