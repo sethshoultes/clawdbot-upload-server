@@ -3,7 +3,7 @@ name: Deploy to DigitalOcean
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   deploy:
@@ -19,6 +19,6 @@ jobs:
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
             cd /home/clawdbot/upload-server
-            git pull origin main
+            git pull origin master
             sudo systemctl restart clawdbot-upload
             sudo systemctl is-active clawdbot-upload

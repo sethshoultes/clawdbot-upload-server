@@ -9,6 +9,10 @@ const PORT = 3456;
 const UPLOAD_DIR = new URL("./uploads/", import.meta.url).pathname;
 const SCRIPT_PATH = new URL("./upload-button.js", import.meta.url).pathname;
 
+// When PUBLIC_BASE_URL is set, return HTTPS URLs (for DO droplet where ClawdBot
+// runs in Docker and can't read local files). When unset, return local file paths.
+const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || "";
+
 // Allowed file extensions
 const ALLOWED_EXT = new Set([
   ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg",
@@ -93,9 +97,9 @@ const server = createServer(async (req, res) => {
     try {
       const ws = createWriteStream(dest);
       await pipeline(req, ws);
-      const localPath = dest;
-      console.log(`uploaded: ${origName} → ${localPath}`);
-      return json(res, 200, { url: localPath, filename: safeName, path: localPath });
+      const fileRef = PUBLIC_BASE_URL ? `${PUBLIC_BASE_URL}/files/${safeName}` : dest;
+      console.log(`uploaded: ${origName} → ${fileRef}`);
+      return json(res, 200, { url: fileRef, filename: safeName, path: fileRef });
     } catch (err) {
       console.error("upload error:", err);
       return json(res, 500, { error: "upload failed" });

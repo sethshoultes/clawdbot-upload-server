@@ -1,7 +1,10 @@
 (function () {
   "use strict";
 
-  const UPLOAD_URL = "http://127.0.0.1:3456/upload";
+  // Auto-detect: use absolute URL on localhost (cross-origin), relative on production
+  const UPLOAD_URL = location.hostname === "127.0.0.1" || location.hostname === "localhost"
+    ? "http://127.0.0.1:3456/upload"
+    : "/upload";
 
   // ── Find the chat textarea ────────────────────────────────────────
   function findTextarea() {
