@@ -127,18 +127,26 @@ All DO droplet config is version-controlled in `deploy/`. To rebuild the droplet
 - `deploy/Caddyfile` → `/etc/caddy/Caddyfile`
 - `deploy/clawdbot.service` → `/etc/systemd/system/clawdbot.service`
 - `deploy/clawdbot-upload.service` → `/etc/systemd/system/clawdbot-upload.service`
+- `deploy/clawdbot-curtis.service` → `/etc/systemd/system/clawdbot-curtis.service`
+- `deploy/clawdbot-curtis-upload.service` → `/etc/systemd/system/clawdbot-curtis-upload.service`
+- `deploy/oauth2-proxy-curtis.service` → `/etc/systemd/system/oauth2-proxy-curtis.service`
+- `deploy/filebrowser-seth.service` → `/etc/systemd/system/filebrowser-seth.service`
+- `deploy/filebrowser-curtis.service` → `/etc/systemd/system/filebrowser-curtis.service`
 - `deploy/control-ui-index.html` → `/opt/clawdbot/dist/control-ui/index.html`
+- `deploy/preview-index.html` → `/opt/preview/index.html`
 
 **Templates with `<PLACEHOLDER>` values (fill in secrets after restore):**
 - `deploy/clawdbot.env.template` → `/opt/clawdbot.env`
+- `deploy/clawdbot-curtis.env.template` → `/opt/clawdbot-curtis.env`
 - `deploy/oauth2-proxy.cfg.template` → `/etc/oauth2-proxy.cfg`
+- `deploy/oauth2-proxy-curtis.cfg.template` → `/etc/oauth2-proxy-curtis.cfg`
 - `deploy/clawdbot.json.template` → `/home/clawdbot/.clawdbot/clawdbot.json`
+- `deploy/clawdbot-curtis.json.template` → `/home/clawdbot-curtis/.clawdbot/clawdbot.json`
 
 ### What's NOT backed up (by design)
 - `uploads/` — temporary files, disposable
 - Actual secret values — must be re-entered manually from a secure source
-- FileBrowser databases — recreated on setup
-- Preview page (`/opt/preview/index.html`) — needs to be re-deployed
+- FileBrowser databases — recreated on setup (restore.sh handles this)
 
 ## File Types Allowed
 .png, .jpg, .jpeg, .gif, .webp, .svg, .pdf, .txt, .md, .csv, .json, .mp4, .mp3, .wav, .webm

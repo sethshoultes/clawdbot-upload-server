@@ -65,15 +65,24 @@ mkdir -p /opt/preview
 cp "$DEPLOY_DIR/preview-index.html" /opt/preview/index.html
 
 # Templates (copy only if real files don't exist yet)
-for envfile in /opt/clawdbot.env /opt/clawdbot-curtis.env; do
-  if [ ! -f "$envfile" ]; then
-    echo "-> $envfile (TEMPLATE - fill in secrets!)"
-    cp "$DEPLOY_DIR/clawdbot.env.template" "$envfile"
-  else
-    echo "-> $envfile already exists, skipping"
-  fi
-done
 
+# Seth env
+if [ ! -f /opt/clawdbot.env ]; then
+  echo "-> /opt/clawdbot.env (TEMPLATE - fill in secrets!)"
+  cp "$DEPLOY_DIR/clawdbot.env.template" /opt/clawdbot.env
+else
+  echo "-> /opt/clawdbot.env already exists, skipping"
+fi
+
+# Curtis env
+if [ ! -f /opt/clawdbot-curtis.env ]; then
+  echo "-> /opt/clawdbot-curtis.env (TEMPLATE - fill in secrets!)"
+  cp "$DEPLOY_DIR/clawdbot-curtis.env.template" /opt/clawdbot-curtis.env
+else
+  echo "-> /opt/clawdbot-curtis.env already exists, skipping"
+fi
+
+# Seth OAuth proxy
 if [ ! -f /etc/oauth2-proxy.cfg ]; then
   echo "-> /etc/oauth2-proxy.cfg (TEMPLATE - fill in secrets!)"
   cp "$DEPLOY_DIR/oauth2-proxy.cfg.template" /etc/oauth2-proxy.cfg
@@ -81,6 +90,15 @@ else
   echo "-> /etc/oauth2-proxy.cfg already exists, skipping"
 fi
 
+# Curtis OAuth proxy
+if [ ! -f /etc/oauth2-proxy-curtis.cfg ]; then
+  echo "-> /etc/oauth2-proxy-curtis.cfg (TEMPLATE - fill in secrets!)"
+  cp "$DEPLOY_DIR/oauth2-proxy-curtis.cfg.template" /etc/oauth2-proxy-curtis.cfg
+else
+  echo "-> /etc/oauth2-proxy-curtis.cfg already exists, skipping"
+fi
+
+# Seth ClawdBot JSON
 if [ ! -f /home/clawdbot/.clawdbot/clawdbot.json ]; then
   echo "-> /home/clawdbot/.clawdbot/clawdbot.json (TEMPLATE - fill in secrets!)"
   mkdir -p /home/clawdbot/.clawdbot
@@ -88,6 +106,16 @@ if [ ! -f /home/clawdbot/.clawdbot/clawdbot.json ]; then
   chown -R clawdbot:clawdbot /home/clawdbot/.clawdbot
 else
   echo "-> /home/clawdbot/.clawdbot/clawdbot.json already exists, skipping"
+fi
+
+# Curtis ClawdBot JSON
+if [ ! -f /home/clawdbot-curtis/.clawdbot/clawdbot.json ]; then
+  echo "-> /home/clawdbot-curtis/.clawdbot/clawdbot.json (TEMPLATE - fill in secrets!)"
+  mkdir -p /home/clawdbot-curtis/.clawdbot
+  cp "$DEPLOY_DIR/clawdbot-curtis.json.template" /home/clawdbot-curtis/.clawdbot/clawdbot.json
+  chown -R clawdbot-curtis:clawdbot-curtis /home/clawdbot-curtis/.clawdbot
+else
+  echo "-> /home/clawdbot-curtis/.clawdbot/clawdbot.json already exists, skipping"
 fi
 
 # Ensure directories exist
