@@ -19,7 +19,7 @@
         "maxConcurrent": 8
       },
       "sandbox": {
-        "mode": "all",
+        "mode": "off",
         "workspaceAccess": "rw",
         "docker": {
           "network": "bridge",
@@ -33,9 +33,16 @@
   "messages": {
     "ackReactionScope": "group-mentions"
   },
+  "browser": {
+    "enabled": true,
+    "executablePath": "/home/clawdbot/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome",
+    "headless": true,
+    "noSandbox": true
+  },
   "commands": {
     "native": "auto",
-    "nativeSkills": "auto"
+    "nativeSkills": "auto",
+    "restart": true
   },
   "gateway": {
     "mode": "local",
