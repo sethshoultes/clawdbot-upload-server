@@ -12,11 +12,21 @@ seth.64-23-141-85.nip.io {
 	handle /workspace/* {
 		uri strip_prefix /workspace
 		root * /home/clawdbot/clawd
-		file_server
+		file_server browse
 	}
 	handle /preview/* {
 		root * /opt/preview
 		rewrite * /index.html
+		file_server
+	}
+	handle /canvas/ {
+		root * /opt
+		rewrite * /canvas-gallery.html
+		file_server
+	}
+	handle /canvas/* {
+		uri strip_prefix /canvas
+		root * /home/clawdbot/clawd/canvas
 		file_server
 	}
 	handle /browse/* {
@@ -41,11 +51,21 @@ curtis.64-23-141-85.nip.io {
 	handle /workspace/* {
 		uri strip_prefix /workspace
 		root * /home/clawdbot-curtis/clawd
-		file_server
+		file_server browse
 	}
 	handle /preview/* {
 		root * /opt/preview
 		rewrite * /index.html
+		file_server
+	}
+	handle /canvas/ {
+		root * /opt
+		rewrite * /canvas-gallery.html
+		file_server
+	}
+	handle /canvas/* {
+		uri strip_prefix /canvas
+		root * /home/clawdbot-curtis/clawd/canvas
 		file_server
 	}
 	handle /browse/* {

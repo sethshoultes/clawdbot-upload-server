@@ -64,6 +64,10 @@ echo "-> /opt/preview/index.html"
 mkdir -p /opt/preview
 cp "$DEPLOY_DIR/preview-index.html" /opt/preview/index.html
 
+# Artifacts gallery
+echo "-> /opt/canvas-gallery.html"
+cp "$DEPLOY_DIR/canvas-gallery.html" /opt/canvas-gallery.html
+
 # Templates (copy only if real files don't exist yet)
 
 # Seth env

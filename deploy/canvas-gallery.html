@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Artifacts</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f1a; color: #e0e0e0; min-height: 100vh; }
+  .header { background: #1a1a2e; padding: 24px 32px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .header h1 { font-size: 1.5em; color: #fff; }
+  .header p { color: #888; margin-top: 4px; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; padding: 32px; max-width: 1200px; }
+  .card { background: #1a1a2e; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; transition: border-color 0.2s, transform 0.2s; }
+  .card:hover { border-color: rgba(139,233,253,0.4); transform: translateY(-2px); }
+  .card a { text-decoration: none; color: inherit; display: block; }
+  .card .preview { height: 180px; background: #12121f; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+  .card .preview iframe { width: 200%; height: 200%; border: none; transform: scale(0.5); transform-origin: 0 0; pointer-events: none; }
+  .card .info { padding: 16px; }
+  .card .info h3 { font-size: 1em; color: #fff; margin-bottom: 4px; }
+  .card .info .meta { font-size: 12px; color: #666; }
+  .empty { text-align: center; padding: 80px 24px; color: #555; }
+  .empty h2 { color: #888; margin-bottom: 8px; }
+  .nav { padding: 12px 32px; display: flex; gap: 16px; font-size: 14px; }
+  .nav a { color: #8be9fd; text-decoration: none; }
+  .nav a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Artifacts</h1>
+  <p>Interactive reports, dashboards, and visualizations created by ClawdBot</p>
+</div>
+<div class="nav">
+  <a href="/browse/">Browse Files</a>
+  <a href="/preview/">Preview</a>
+</div>
+<div class="grid" id="grid"></div>
+<div class="empty" id="empty" style="display:none">
+  <h2>No artifacts yet</h2>
+  <p>Ask ClawdBot to create an interactive report, dashboard, or visualization.</p>
+</div>
+
+<script>
+(function() {
+  fetch('/workspace/canvas/')
+    .then(function(r) { return r.text(); })
+    .then(function(html) {
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(html, 'text/html');
+      var links = doc.querySelectorAll('a[href]');
+      var files = [];
+      links.forEach(function(a) {
+        var href = a.getAttribute('href');
+        if (href && href.match(/\.(html|svg)$/i) && href !== 'index.html') {
+          var name = decodeURIComponent(href.replace(/\/$/, ''));
+          files.push({ name: name, href: href });
+        }
+      });
+
+      var grid = document.getElementById('grid');
+      var empty = document.getElementById('empty');
+
+      if (files.length === 0) {
+        empty.style.display = 'block';
+        return;
+      }
+
+      files.forEach(function(f) {
+        var card = document.createElement('div');
+        card.className = 'card';
+
+        var link = document.createElement('a');
+        link.href = '/canvas/' + f.href;
+
+        var preview = document.createElement('div');
+        preview.className = 'preview';
+        var iframe = document.createElement('iframe');
+        iframe.src = '/workspace/canvas/' + f.href;
+        iframe.loading = 'lazy';
+        preview.appendChild(iframe);
+
+        var info = document.createElement('div');
+        info.className = 'info';
+        var h3 = document.createElement('h3');
+        var title = f.name.replace(/\.html?$/i, '').replace(/[-_]/g, ' ');
+        h3.textContent = title.charAt(0).toUpperCase() + title.slice(1);
+        var meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = f.name.split('.').pop().toUpperCase() + ' artifact';
+
+        info.appendChild(h3);
+        info.appendChild(meta);
+        link.appendChild(preview);
+        link.appendChild(info);
+        card.appendChild(link);
+        grid.appendChild(card);
+      });
+    })
+    .catch(function() {
+      document.getElementById('empty').style.display = 'block';
+    });
+})();
+</script>
+</body>
+</html>
