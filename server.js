@@ -112,5 +112,6 @@ const server = createServer(async (req, res) => {
 server.listen(PORT, "127.0.0.1", () => {
   console.log(`Upload server running on http://127.0.0.1:${PORT}`);
   console.log(`Upload dir: ${UPLOAD_DIR}`);
+  console.log(`Public base URL: ${PUBLIC_BASE_URL || "(local file paths)"}`);
   console.log(`Injection script: http://127.0.0.1:${PORT}/upload-button.js`);
 });
