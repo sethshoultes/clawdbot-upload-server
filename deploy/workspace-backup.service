@@ -1,0 +1,7 @@
+[Unit]
+Description=Back up ClawdBot workspace directories
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/backup-workspaces.sh

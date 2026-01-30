@@ -22,3 +22,8 @@ jobs:
             git pull origin master
             sudo systemctl restart clawdbot-upload
             sudo systemctl is-active clawdbot-upload
+
+            cd /home/clawdbot-curtis/upload-server
+            git pull origin master
+            sudo systemctl restart clawdbot-curtis-upload
+            sudo systemctl is-active clawdbot-curtis-upload

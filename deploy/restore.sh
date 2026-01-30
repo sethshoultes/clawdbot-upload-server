@@ -146,14 +146,27 @@ if [ ! -f /etc/filebrowser/curtis.db ]; then
   filebrowser users add admin adminpassword1234 --database /etc/filebrowser/curtis.db --perm.admin
 fi
 
+# Workspace backup
+echo "-> /opt/backup-workspaces.sh"
+cp "$DEPLOY_DIR/backup-workspaces.sh" /opt/backup-workspaces.sh
+chmod +x /opt/backup-workspaces.sh
+
+echo "-> /etc/systemd/system/workspace-backup.service"
+cp "$DEPLOY_DIR/workspace-backup.service" /etc/systemd/system/workspace-backup.service
+
+echo "-> /etc/systemd/system/workspace-backup.timer"
+cp "$DEPLOY_DIR/workspace-backup.timer" /etc/systemd/system/workspace-backup.timer
+
 # Reload and restart
 echo "=== Reloading systemd and restarting services ==="
 systemctl daemon-reload
 systemctl enable clawdbot clawdbot-upload clawdbot-curtis clawdbot-curtis-upload \
-  caddy oauth2-proxy oauth2-proxy-curtis filebrowser-seth filebrowser-curtis
+  caddy oauth2-proxy oauth2-proxy-curtis filebrowser-seth filebrowser-curtis \
+  workspace-backup.timer
 systemctl restart caddy
 systemctl restart clawdbot-upload clawdbot-curtis-upload
 systemctl restart filebrowser-seth filebrowser-curtis
+systemctl start workspace-backup.timer
 
 echo ""
 echo "=== Done ==="

@@ -73,6 +73,7 @@ Each team member gets their own ClawdBot instance with separate gateway, upload 
 | `filebrowser-seth.service` | Seth's FileBrowser | 8090 |
 | `filebrowser-curtis.service` | Curtis's FileBrowser | 8091 |
 | `caddy.service` | Reverse proxy, HTTPS | 443 |
+| `workspace-backup.timer` | Daily workspace backups (3am UTC) | — |
 
 #### ClawdBot Config
 - Sandbox: `"mode": "off"` (runs directly on host, not Docker — enables Node.js, FFmpeg, Remotion)
@@ -134,6 +135,9 @@ All DO droplet config is version-controlled in `deploy/`. To rebuild the droplet
 - `deploy/filebrowser-curtis.service` → `/etc/systemd/system/filebrowser-curtis.service`
 - `deploy/control-ui-index.html` → `/opt/clawdbot/dist/control-ui/index.html`
 - `deploy/preview-index.html` → `/opt/preview/index.html`
+- `deploy/backup-workspaces.sh` → `/opt/backup-workspaces.sh`
+- `deploy/workspace-backup.service` → `/etc/systemd/system/workspace-backup.service`
+- `deploy/workspace-backup.timer` → `/etc/systemd/system/workspace-backup.timer`
 
 **Templates with `<PLACEHOLDER>` values (fill in secrets after restore):**
 - `deploy/clawdbot.env.template` → `/opt/clawdbot.env`
@@ -147,6 +151,16 @@ All DO droplet config is version-controlled in `deploy/`. To rebuild the droplet
 - `uploads/` — temporary files, disposable
 - Actual secret values — must be re-entered manually from a secure source
 - FileBrowser databases — recreated on setup (restore.sh handles this)
+
+## Workspace Backups
+Daily automated backups of both workspaces (`/home/clawdbot/clawd/` and `/home/clawdbot-curtis/clawd/`).
+
+- **Script:** `/opt/backup-workspaces.sh`
+- **Schedule:** Daily at 3am UTC via `workspace-backup.timer`
+- **Storage:** `/var/backups/workspaces/` (7-day rotation)
+- **Format:** `seth-YYYY-MM-DD.tar.gz`, `curtis-YYYY-MM-DD.tar.gz`
+- **Manual run:** `systemctl start workspace-backup.service`
+- **Offsite:** Script has rclone sync stub — uncomment after configuring `rclone` with DO Spaces or S3
 
 ## File Types Allowed
 .png, .jpg, .jpeg, .gif, .webp, .svg, .pdf, .txt, .md, .csv, .json, .mp4, .mp3, .wav, .webm
