@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; color: #1a1a2e; }
+  .toolbar { background: #1a1a2e; color: #e0e0e0; padding: 12px 24px; display: flex; align-items: center; gap: 16px; font-size: 14px; position: sticky; top: 0; z-index: 10; }
+  .toolbar a { color: #8be9fd; text-decoration: none; }
+  .toolbar a:hover { text-decoration: underline; }
+  .toolbar .filename { color: #fff; font-weight: 600; }
+  .toolbar .actions { margin-left: auto; display: flex; gap: 12px; }
+  .toolbar .btn { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; text-decoration: none; }
+  .toolbar .btn:hover { background: rgba(255,255,255,0.2); }
+  .content { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; line-height: 1.7; }
+  .content h1 { font-size: 2em; margin: 0.8em 0 0.4em; color: #1a1a2e; border-bottom: 2px solid #eee; padding-bottom: 0.3em; }
+  .content h2 { font-size: 1.5em; margin: 1.2em 0 0.4em; color: #2d2d4e; }
+  .content h3 { font-size: 1.25em; margin: 1em 0 0.3em; color: #3d3d5c; }
+  .content p { margin: 0.8em 0; }
+  .content ul, .content ol { margin: 0.8em 0; padding-left: 2em; }
+  .content li { margin: 0.3em 0; }
+  .content code { background: #f4f4f8; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+  .content pre { background: #1a1a2e; color: #e0e0e0; padding: 16px 20px; border-radius: 8px; overflow-x: auto; margin: 1em 0; }
+  .content pre code { background: none; padding: 0; color: inherit; }
+  .content blockquote { border-left: 4px solid #8be9fd; padding: 8px 16px; margin: 1em 0; background: #f8f8fc; color: #555; }
+  .content img { max-width: 100%; height: auto; border-radius: 8px; margin: 1em 0; }
+  .content table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+  .content th, .content td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+  .content th { background: #f4f4f8; font-weight: 600; }
+  .content a { color: #0066cc; }
+  .media-container { display: flex; justify-content: center; padding: 40px 24px; }
+  .media-container video, .media-container img { max-width: 100%; max-height: 80vh; border-radius: 8px; }
+  .error { text-align: center; padding: 80px 24px; color: #888; }
+  .error h2 { color: #cc0000; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <a href="/browse/">Browse</a>
+  <span>/</span>
+  <span class="filename" id="filename"></span>
+  <div class="actions">
+    <a class="btn" id="raw-link" href="#">Raw</a>
+    <a class="btn" id="download-link" href="#" download>Download</a>
+  </div>
+</div>
+<div id="output"></div>
+
+<script>
+(function() {
+  var path = location.pathname.replace(/^\/preview\//, '');
+  if (!path) {
+    document.getElementById('output').textContent = 'No file specified. Use /preview/path/to/file.md';
+    return;
+  }
+
+  var decoded = decodeURIComponent(path);
+  var filename = decoded.split('/').pop();
+  var ext = filename.split('.').pop().toLowerCase();
+  var rawUrl = '/workspace/' + path;
+
+  var dir = path.substring(0, path.lastIndexOf('/') + 1);
+  var wsBase = location.origin + '/workspace/' + dir;
+
+  document.getElementById('filename').textContent = decoded;
+  document.getElementById('raw-link').href = rawUrl;
+  document.getElementById('download-link').href = rawUrl;
+  document.title = filename + ' \u2014 Preview';
+
+  var output = document.getElementById('output');
+
+  function setMedia(tag, attrs) {
+    var container = document.createElement('div');
+    container.className = 'media-container';
+    var el = document.createElement(tag);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    container.appendChild(el);
+    output.appendChild(container);
+  }
+
+  if (['png','jpg','jpeg','gif','webp','svg'].indexOf(ext) !== -1) {
+    setMedia('img', { src: rawUrl, alt: filename });
+  } else if (['mp4','webm','mov'].indexOf(ext) !== -1) {
+    var container = document.createElement('div');
+    container.className = 'media-container';
+    var video = document.createElement('video');
+    video.setAttribute('controls', '');
+    video.setAttribute('autoplay', '');
+    var source = document.createElement('source');
+    source.setAttribute('src', rawUrl);
+    video.appendChild(source);
+    container.appendChild(video);
+    output.appendChild(container);
+  } else if (['mp3','wav','ogg'].indexOf(ext) !== -1) {
+    var container2 = document.createElement('div');
+    container2.className = 'media-container';
+    var audio = document.createElement('audio');
+    audio.setAttribute('controls', '');
+    audio.setAttribute('autoplay', '');
+    var src2 = document.createElement('source');
+    src2.setAttribute('src', rawUrl);
+    audio.appendChild(src2);
+    container2.appendChild(audio);
+    output.appendChild(container2);
+  } else if (ext === 'pdf' || ext === 'html') {
+    var iframe = document.createElement('iframe');
+    iframe.setAttribute('src', rawUrl);
+    iframe.style.cssText = 'width:100%;height:calc(100vh - 50px);border:none;';
+    output.appendChild(iframe);
+  } else {
+    fetch(rawUrl).then(function(r) {
+      if (!r.ok) throw new Error(r.status);
+      return r.text();
+    }).then(function(text) {
+      if (['md','markdown'].indexOf(ext) !== -1) {
+        var html = marked.parse(text);
+        // Rewrite relative src and href to resolve via /workspace/ directory
+        html = html.replace(/(src|href)="(?!https?:\/\/|\/\/|\/|#|data:)([^"]+)"/g, function(m, attr, rel) {
+          return attr + '="' + wsBase + rel + '"';
+        });
+        var wrapper = document.createElement('div');
+        wrapper.className = 'content';
+        // Note: content is from workspace files authored by authenticated users only
+        wrapper.innerHTML = html;
+        output.appendChild(wrapper);
+      } else {
+        var pre = document.createElement('pre');
+        var code = document.createElement('code');
+        code.textContent = text;
+        pre.appendChild(code);
+        var wrap = document.createElement('div');
+        wrap.className = 'content';
+        wrap.appendChild(pre);
+        output.appendChild(wrap);
+      }
+    }).catch(function(err) {
+      var errDiv = document.createElement('div');
+      errDiv.className = 'error';
+      var h2 = document.createElement('h2');
+      h2.textContent = 'Could not load file';
+      var p = document.createElement('p');
+      p.textContent = err.message;
+      errDiv.appendChild(h2);
+      errDiv.appendChild(p);
+      output.appendChild(errDiv);
+    });
+  }
+})();
+</script>
+</body>
+</html>

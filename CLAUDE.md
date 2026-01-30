@@ -46,28 +46,57 @@ One codebase serves both local dev and production. Behavior is controlled by:
   <script src="http://127.0.0.1:3456/upload-button.js" defer></script>
   ```
 
-### DigitalOcean Droplet (production, team access)
-- Domain: `64-23-141-85.nip.io` (HTTPS via Caddy auto-TLS)
-- `PUBLIC_BASE_URL`: `https://64-23-141-85.nip.io` (set in systemd service)
+### DigitalOcean Droplet (production, multi-instance team access)
+- Hostname: `clawdbot-do` (shortened to avoid mDNS 63-byte label limit)
+- Droplet size: `s-2vcpu-4gb-120gb-intel` ($32/mo)
 - Upload server cloned from this repo to `/home/clawdbot/upload-server/`
-- Script tag uses relative path: `<script src="/upload-button.js" defer>`
+
+#### Multi-Instance Setup (per-user subdomains)
+Each team member gets their own ClawdBot instance with separate gateway, upload server, OAuth proxy, and workspace.
+
+| Instance | Subdomain | Gateway | Upload | OAuth | FileBrowser |
+|---|---|---|---|---|---|
+| **Seth** | `seth.64-23-141-85.nip.io` | 18789 | 3456 | 4180 | 8090 |
+| **Curtis** | `curtis.64-23-141-85.nip.io` | 18790 | 3457 | 4182 | 8091 |
+
+- `64-23-141-85.nip.io` redirects to Seth's subdomain
 
 #### Droplet Services (systemd)
 | Service | Description | Port |
 |---|---|---|
-| `clawdbot.service` | Main ClawdBot gateway | 18789 |
-| `clawdbot-upload.service` | Upload server | 3456 |
-| `oauth2-proxy.service` | Google OAuth (@caseproof.com) | 4180 |
+| `clawdbot.service` | Seth's gateway | 18789 |
+| `clawdbot-curtis.service` | Curtis's gateway | 18790 |
+| `clawdbot-upload.service` | Seth's upload server | 3456 |
+| `clawdbot-curtis-upload.service` | Curtis's upload server | 3457 |
+| `oauth2-proxy.service` | Seth's OAuth (@caseproof.com) | 4180 |
+| `oauth2-proxy-curtis.service` | Curtis's OAuth (@caseproof.com) | 4182 |
+| `filebrowser-seth.service` | Seth's FileBrowser | 8090 |
+| `filebrowser-curtis.service` | Curtis's FileBrowser | 8091 |
 | `caddy.service` | Reverse proxy, HTTPS | 443 |
 
-#### Caddy Routes
+#### ClawdBot Config
+- Sandbox: `"mode": "off"` (runs directly on host, not Docker — enables Node.js, FFmpeg, Remotion)
+- Model: `anthropic/claude-opus-4-5`
+- Custom instructions via `AGENTS.md` in each workspace (NOT CLAUDE.md)
+- FFmpeg installed on host for video rendering
+
+#### Caddy Routes (per subdomain)
 | Route | Target |
 |---|---|
-| `/upload` | localhost:3456 (upload endpoint) |
-| `/upload-button.js` | localhost:3456 (injection script) |
-| `/files/*` | localhost:3456 (serve uploaded files) |
-| `/videos/*` | Static files (Remotion video output) |
-| `/*` (default) | localhost:4180 (oauth2-proxy → ClawdBot) |
+| `/upload` | Upload server (upload endpoint) |
+| `/upload-button.js` | Upload server (injection script) |
+| `/files/*` | Upload server (serve uploaded files) |
+| `/workspace/*` | Static files from workspace (raw file access) |
+| `/preview/*` | Preview page (renders markdown as HTML, displays media) |
+| `/browse/*` | FileBrowser (web file manager, noauth behind OAuth) |
+| `/*` (default) | oauth2-proxy → ClawdBot gateway |
+
+#### Content Access
+- **Preview:** `https://<subdomain>/preview/<path>` — formatted view (markdown → HTML, video player, image display)
+- **Browse:** `https://<subdomain>/browse/` — web file manager UI
+- **Raw:** `https://<subdomain>/workspace/<path>` — direct file download
+- Preview page: `/opt/preview/index.html` (client-side marked.js rendering)
+- FileBrowser: noauth mode (OAuth already protects access), databases in `/etc/filebrowser/`
 
 ## Deployment
 
@@ -85,11 +114,13 @@ sudo systemctl restart clawdbot-upload
 ## Infrastructure Backup (`deploy/` directory)
 All DO droplet config is version-controlled in `deploy/`. To rebuild the droplet from scratch:
 
-1. Install ClawdBot, Caddy, oauth2-proxy, Docker on a fresh droplet
-2. Clone this repo to `/home/clawdbot/upload-server/`
-3. Run `sudo bash deploy/restore.sh`
-4. Fill in secrets in the template files (API keys, OAuth secrets, tokens)
-5. Restart services
+1. Install ClawdBot, Caddy, oauth2-proxy, FileBrowser, FFmpeg on a fresh droplet
+2. Set hostname: `hostnamectl set-hostname clawdbot-do`
+3. Clone this repo to `/home/clawdbot/upload-server/`
+4. Run `sudo bash deploy/restore.sh`
+5. Fill in secrets in the template files (API keys, OAuth secrets, tokens)
+6. Create users, set up FileBrowser databases, copy preview page
+7. Restart services
 
 ### What's backed up
 **Committed as-is (no secrets):**
@@ -106,6 +137,8 @@ All DO droplet config is version-controlled in `deploy/`. To rebuild the droplet
 ### What's NOT backed up (by design)
 - `uploads/` — temporary files, disposable
 - Actual secret values — must be re-entered manually from a secure source
+- FileBrowser databases — recreated on setup
+- Preview page (`/opt/preview/index.html`) — needs to be re-deployed
 
 ## File Types Allowed
 .png, .jpg, .jpeg, .gif, .webp, .svg, .pdf, .txt, .md, .csv, .json, .mp4, .mp3, .wav, .webm

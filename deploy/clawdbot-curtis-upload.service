@@ -1,0 +1,18 @@
+[Unit]
+Description=ClawdBot Upload Server (Curtis)
+After=network.target
+
+[Service]
+Type=simple
+User=clawdbot-curtis
+Group=clawdbot-curtis
+WorkingDirectory=/home/clawdbot-curtis/upload-server
+Environment="PUBLIC_BASE_URL=https://curtis.64-23-141-85.nip.io"
+ExecStart=/usr/bin/node /home/clawdbot-curtis/upload-server/server.js
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

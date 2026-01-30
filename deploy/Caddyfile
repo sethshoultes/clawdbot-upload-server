@@ -1,9 +1,5 @@
-64-23-141-85.nip.io {
-	handle /videos/* {
-		uri strip_prefix /videos
-		root * /home/clawdbot/remotion-video/out
-		file_server
-	}
+# Seth's instance
+seth.64-23-141-85.nip.io {
 	handle /upload {
 		reverse_proxy localhost:3456
 	}
@@ -13,17 +9,66 @@
 	handle /files/* {
 		reverse_proxy localhost:3456
 	}
+	handle /workspace/* {
+		uri strip_prefix /workspace
+		root * /home/clawdbot/clawd
+		file_server
+	}
+	handle /preview/* {
+		root * /opt/preview
+		rewrite * /index.html
+		file_server
+	}
+	handle /browse/* {
+		reverse_proxy localhost:8090
+	}
 	handle {
 		reverse_proxy localhost:4180
 	}
-	header X-DO-MARKETPLACE "clawdbot"
+}
+
+# Curtis's instance
+curtis.64-23-141-85.nip.io {
+	handle /upload {
+		reverse_proxy localhost:3457
+	}
+	handle /upload-button.js {
+		reverse_proxy localhost:3457
+	}
+	handle /files/* {
+		reverse_proxy localhost:3457
+	}
+	handle /workspace/* {
+		uri strip_prefix /workspace
+		root * /home/clawdbot-curtis/clawd
+		file_server
+	}
+	handle /preview/* {
+		root * /opt/preview
+		rewrite * /index.html
+		file_server
+	}
+	handle /browse/* {
+		reverse_proxy localhost:8091
+	}
+	handle {
+		reverse_proxy localhost:4182
+	}
+}
+
+# Original domain redirects to Seth's instance
+64-23-141-85.nip.io {
+	handle {
+		redir https://seth.64-23-141-85.nip.io{uri} permanent
+	}
+	header X-DO-MARKETPLACE clawdbot
 }
 
 64-23-141-85.nip.io:8443 {
 	reverse_proxy localhost:4181
-	header X-DO-MARKETPLACE "clawdbot"
+	header X-DO-MARKETPLACE clawdbot
 }
 
 64.23.141.85 {
-	redir https://64-23-141-85.nip.io{uri} permanent
+	redir https://seth.64-23-141-85.nip.io{uri} permanent
 }

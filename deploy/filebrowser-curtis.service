@@ -1,0 +1,11 @@
+[Unit]
+Description=FileBrowser (Curtis)
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/filebrowser --database /etc/filebrowser/curtis.db
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

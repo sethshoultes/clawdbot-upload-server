@@ -1,0 +1,11 @@
+[Unit]
+Description=FileBrowser (Seth)
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/filebrowser --database /etc/filebrowser/seth.db
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

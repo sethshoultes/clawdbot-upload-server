@@ -7,7 +7,7 @@ Type=simple
 User=clawdbot
 Group=clawdbot
 WorkingDirectory=/home/clawdbot/upload-server
-Environment="PUBLIC_BASE_URL=https://64-23-141-85.nip.io"
+Environment="PUBLIC_BASE_URL=https://seth.64-23-141-85.nip.io"
 ExecStart=/usr/bin/node /home/clawdbot/upload-server/server.js
 Restart=always
 RestartSec=5

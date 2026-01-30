@@ -1,0 +1,11 @@
+[Unit]
+Description=OAuth2 Proxy (Curtis)
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/oauth2-proxy --config=/etc/oauth2-proxy-curtis.cfg
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

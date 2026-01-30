@@ -1,0 +1,26 @@
+[Unit]
+Description=Clawdbot Gateway Service (Curtis)
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=clawdbot-curtis
+Group=clawdbot-curtis
+WorkingDirectory=/opt/clawdbot
+EnvironmentFile=/opt/clawdbot-curtis.env
+Environment="HOME=/home/clawdbot-curtis"
+Environment="NODE_ENV=production"
+Environment="PATH=/home/clawdbot-curtis/.npm/bin:/usr/local/bin:/usr/bin:/bin:"
+
+ExecStart=/usr/bin/node /opt/clawdbot/dist/index.js gateway --port ${CLAWDBOT_GATEWAY_PORT} --allow-unconfigured
+
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
