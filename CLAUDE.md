@@ -9,6 +9,15 @@ A file upload server and floating UI button for ClawdBot's Control UI. Users can
 - **CI/CD:** GitHub Actions deploys to DO droplet on push to `master`
 - **Secrets required:** `DO_HOST`, `DO_USER`, `DO_SSH_KEY`
 
+## AI Platforms Configured
+| Platform | Env Var | Use Case |
+|---|---|---|
+| **Anthropic** | `ANTHROPIC_API_KEY` | Primary model (Claude Opus 4.5) — reasoning, coding, chat |
+| **OpenAI** | `OPENAI_API_KEY` | DALL-E image generation, Whisper transcription, TTS |
+| **Google Gemini** | `GOOGLE_API_KEY` | Gemini models, Imagen image generation, Veo video |
+
+Keys are set in `/opt/clawdbot.env` on DO and in `~/.zshrc` locally. Never commit live keys — use `<PLACEHOLDER>` values in templates.
+
 ## Architecture
 - `server.js` — Node.js HTTP server (zero dependencies, ES modules), port 3456
 - `upload-button.js` — Client-side injection script (paperclip button inline left of textarea, drag-and-drop)
