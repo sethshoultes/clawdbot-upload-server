@@ -1,5 +1,6 @@
 # Seth's instance
 seth.64-23-141-85.nip.io {
+	# Upload endpoints (used by Control UI script, no separate auth needed)
 	handle /upload {
 		reverse_proxy localhost:3456
 	}
@@ -9,29 +10,78 @@ seth.64-23-141-85.nip.io {
 	handle /files/* {
 		reverse_proxy localhost:3456
 	}
+
+	# Protected content routes — require OAuth session
 	handle /workspace/* {
+		forward_auth localhost:4180 {
+			uri /oauth2/auth
+			header_up X-Forwarded-Uri {uri}
+			copy_headers X-Auth-Request-User X-Auth-Request-Email
+			@unauthorized status 401
+			handle_response @unauthorized {
+				redir https://seth.64-23-141-85.nip.io/oauth2/start?rd={uri} 302
+			}
+		}
 		uri strip_prefix /workspace
 		root * /home/clawdbot/clawd
 		file_server browse
 	}
 	handle /preview/* {
+		forward_auth localhost:4180 {
+			uri /oauth2/auth
+			header_up X-Forwarded-Uri {uri}
+			copy_headers X-Auth-Request-User X-Auth-Request-Email
+			@unauthorized status 401
+			handle_response @unauthorized {
+				redir https://seth.64-23-141-85.nip.io/oauth2/start?rd={uri} 302
+			}
+		}
 		root * /opt/preview
 		rewrite * /index.html
 		file_server
 	}
 	handle /canvas/ {
+		forward_auth localhost:4180 {
+			uri /oauth2/auth
+			header_up X-Forwarded-Uri {uri}
+			copy_headers X-Auth-Request-User X-Auth-Request-Email
+			@unauthorized status 401
+			handle_response @unauthorized {
+				redir https://seth.64-23-141-85.nip.io/oauth2/start?rd={uri} 302
+			}
+		}
 		root * /opt
 		rewrite * /canvas-gallery.html
 		file_server
 	}
 	handle /canvas/* {
+		forward_auth localhost:4180 {
+			uri /oauth2/auth
+			header_up X-Forwarded-Uri {uri}
+			copy_headers X-Auth-Request-User X-Auth-Request-Email
+			@unauthorized status 401
+			handle_response @unauthorized {
+				redir https://seth.64-23-141-85.nip.io/oauth2/start?rd={uri} 302
+			}
+		}
 		uri strip_prefix /canvas
 		root * /home/clawdbot/clawd/canvas
 		file_server
 	}
 	handle /browse/* {
+		forward_auth localhost:4180 {
+			uri /oauth2/auth
+			header_up X-Forwarded-Uri {uri}
+			copy_headers X-Auth-Request-User X-Auth-Request-Email
+			@unauthorized status 401
+			handle_response @unauthorized {
+				redir https://seth.64-23-141-85.nip.io/oauth2/start?rd={uri} 302
+			}
+		}
 		reverse_proxy localhost:8090
 	}
+
+	# Default: ClawdBot UI through oauth2-proxy
 	handle {
 		reverse_proxy localhost:4180
 	}
@@ -48,29 +98,78 @@ curtis.64-23-141-85.nip.io {
 	handle /files/* {
 		reverse_proxy localhost:3457
 	}
+
+	# Protected content routes — require OAuth session
 	handle /workspace/* {
+		forward_auth localhost:4182 {
+			uri /oauth2/auth
+			header_up X-Forwarded-Uri {uri}
+			copy_headers X-Auth-Request-User X-Auth-Request-Email
+			@unauthorized status 401
+			handle_response @unauthorized {
+				redir https://curtis.64-23-141-85.nip.io/oauth2/start?rd={uri} 302
+			}
+		}
 		uri strip_prefix /workspace
 		root * /home/clawdbot-curtis/clawd
 		file_server browse
 	}
 	handle /preview/* {
+		forward_auth localhost:4182 {
+			uri /oauth2/auth
+			header_up X-Forwarded-Uri {uri}
+			copy_headers X-Auth-Request-User X-Auth-Request-Email
+			@unauthorized status 401
+			handle_response @unauthorized {
+				redir https://curtis.64-23-141-85.nip.io/oauth2/start?rd={uri} 302
+			}
+		}
 		root * /opt/preview
 		rewrite * /index.html
 		file_server
 	}
 	handle /canvas/ {
+		forward_auth localhost:4182 {
+			uri /oauth2/auth
+			header_up X-Forwarded-Uri {uri}
+			copy_headers X-Auth-Request-User X-Auth-Request-Email
+			@unauthorized status 401
+			handle_response @unauthorized {
+				redir https://curtis.64-23-141-85.nip.io/oauth2/start?rd={uri} 302
+			}
+		}
 		root * /opt
 		rewrite * /canvas-gallery.html
 		file_server
 	}
 	handle /canvas/* {
+		forward_auth localhost:4182 {
+			uri /oauth2/auth
+			header_up X-Forwarded-Uri {uri}
+			copy_headers X-Auth-Request-User X-Auth-Request-Email
+			@unauthorized status 401
+			handle_response @unauthorized {
+				redir https://curtis.64-23-141-85.nip.io/oauth2/start?rd={uri} 302
+			}
+		}
 		uri strip_prefix /canvas
 		root * /home/clawdbot-curtis/clawd/canvas
 		file_server
 	}
 	handle /browse/* {
+		forward_auth localhost:4182 {
+			uri /oauth2/auth
+			header_up X-Forwarded-Uri {uri}
+			copy_headers X-Auth-Request-User X-Auth-Request-Email
+			@unauthorized status 401
+			handle_response @unauthorized {
+				redir https://curtis.64-23-141-85.nip.io/oauth2/start?rd={uri} 302
+			}
+		}
 		reverse_proxy localhost:8091
 	}
+
+	# Default: ClawdBot UI through oauth2-proxy
 	handle {
 		reverse_proxy localhost:4182
 	}
