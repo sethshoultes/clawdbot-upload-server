@@ -81,6 +81,14 @@ Each team member gets their own ClawdBot instance with separate gateway, upload 
 - Custom instructions via `AGENTS.md` in each workspace (NOT CLAUDE.md)
 - FFmpeg installed on host for video rendering
 
+#### Skills Deployment
+Skills live in `.agents/skills/` in this repo. On DO, workspace and `.clawdbot` skills directories are **symlinks** to the upload-server repo:
+- `~/clawd/.agents/skills/` → `~/upload-server/.agents/skills/`
+- `~/.clawdbot/skills/` → `~/upload-server/.agents/skills/`
+- `~/clawd/skills/<name>` → `../.agents/skills/<name>` (relative symlinks, committed in repo)
+
+This means `git pull` on the upload-server automatically updates all skills — no manual copy needed. The CI/CD pipeline pulls the repo for both users, so new skills deploy automatically.
+
 #### Caddy Routes (per subdomain)
 | Route | Target |
 |---|---|

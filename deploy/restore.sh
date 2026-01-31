@@ -129,6 +129,26 @@ chown -R clawdbot:clawdbot /home/clawdbot/upload-server
 mkdir -p /home/clawdbot-curtis/upload-server/uploads
 chown -R clawdbot-curtis:clawdbot-curtis /home/clawdbot-curtis/upload-server 2>/dev/null || true
 
+# Skills: symlink workspace and .clawdbot skills dirs to upload-server repo
+# This way git pull on the upload-server automatically updates all skills
+echo "-> Symlinking skills directories"
+
+# Seth
+mkdir -p /home/clawdbot/clawd/.agents /home/clawdbot/clawd/skills
+rm -rf /home/clawdbot/clawd/.agents/skills
+ln -sfn /home/clawdbot/upload-server/.agents/skills /home/clawdbot/clawd/.agents/skills
+rm -rf /home/clawdbot/.clawdbot/skills
+ln -sfn /home/clawdbot/upload-server/.agents/skills /home/clawdbot/.clawdbot/skills
+chown -h clawdbot:clawdbot /home/clawdbot/clawd/.agents/skills /home/clawdbot/.clawdbot/skills
+
+# Curtis
+mkdir -p /home/clawdbot-curtis/clawd/.agents /home/clawdbot-curtis/clawd/skills
+rm -rf /home/clawdbot-curtis/clawd/.agents/skills
+ln -sfn /home/clawdbot-curtis/upload-server/.agents/skills /home/clawdbot-curtis/clawd/.agents/skills
+rm -rf /home/clawdbot-curtis/.clawdbot/skills
+ln -sfn /home/clawdbot-curtis/upload-server/.agents/skills /home/clawdbot-curtis/.clawdbot/skills
+chown -h clawdbot-curtis:clawdbot-curtis /home/clawdbot-curtis/clawd/.agents/skills /home/clawdbot-curtis/.clawdbot/skills
+
 mkdir -p /etc/filebrowser
 
 # Set up FileBrowser databases if they don't exist
