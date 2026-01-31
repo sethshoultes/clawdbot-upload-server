@@ -15,7 +15,7 @@
         "primary": "anthropic/claude-sonnet-4-5",
         "fallbacks": [
           "openrouter/anthropic/claude-sonnet-4",
-          "openrouter/google/gemini-2.5-flash-preview",
+          "openrouter/google/gemini-2.5-flash",
           "openrouter/deepseek/deepseek-r1:free"
         ]
       },
@@ -23,8 +23,8 @@
         "anthropic/claude-opus-4-5": { "alias": "Opus" },
         "anthropic/claude-sonnet-4-5": { "alias": "Sonnet" },
         "openrouter/anthropic/claude-sonnet-4": {},
-        "openrouter/google/gemini-2.5-flash-preview": {},
-        "openrouter/google/gemini-2.5-pro-preview": {},
+        "openrouter/google/gemini-2.5-flash": {},
+        "openrouter/google/gemini-2.5-pro": {},
         "openrouter/deepseek/deepseek-r1:free": {},
         "openrouter/meta-llama/llama-3.3-70b-instruct:free": {},
         "openrouter/qwen/qwen-2.5-vl-72b-instruct:free": {}
@@ -35,7 +35,7 @@
       },
       "maxConcurrent": 4,
       "subagents": {
-        "model": "openrouter/google/gemini-2.5-flash-preview",
+        "model": "openrouter/google/gemini-2.5-flash",
         "maxConcurrent": 8
       },
       "sandbox": {
