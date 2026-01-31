@@ -200,11 +200,11 @@
 
   // ── Mount: insert into .chat-compose grid, before the label ─────
   function mountButton() {
+    // Already mounted and still in DOM — nothing to do
+    if (btn.parentElement && document.body.contains(btn)) return;
+
     var ta = findTextarea();
-    if (!ta) {
-      setTimeout(mountButton, 500);
-      return;
-    }
+    if (!ta) return;
 
     // The structure is: div.chat-compose > label.chat-compose__field > textarea
     var compose = ta.closest(".chat-compose");
@@ -228,11 +228,13 @@
       document.body.appendChild(btn);
     }
 
-    document.body.appendChild(fileInput);
-    document.body.appendChild(overlay);
-    document.body.appendChild(dropZone);
+    if (!document.body.contains(fileInput)) document.body.appendChild(fileInput);
+    if (!document.body.contains(overlay)) document.body.appendChild(overlay);
+    if (!document.body.contains(dropZone)) document.body.appendChild(dropZone);
     console.log("[clawdbot-upload] Upload button injected next to textarea");
   }
 
+  // Re-mount after SPA navigation destroys the button
+  setInterval(mountButton, 1000);
   mountButton();
 })();
