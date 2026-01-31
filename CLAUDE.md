@@ -15,6 +15,7 @@ A file upload server and floating UI button for ClawdBot's Control UI. Users can
 | **Anthropic** | `ANTHROPIC_API_KEY` | Primary model (Claude Opus 4.5) — reasoning, coding, chat |
 | **OpenAI** | `OPENAI_API_KEY` | DALL-E image generation, Whisper transcription, TTS |
 | **Google Gemini** | `GOOGLE_API_KEY` | Gemini models, Imagen image generation, Veo video |
+| **WordPress** | `WP_SITE_URL`, `WP_USERNAME`, `WP_APP_PASSWORD` | wp-publish skill — REST API publishing |
 
 Keys are set in `/opt/clawdbot.env` on DO and in `~/.zshrc` locally. Never commit live keys — use `<PLACEHOLDER>` values in templates.
 
