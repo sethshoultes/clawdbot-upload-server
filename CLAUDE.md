@@ -90,6 +90,8 @@ Each team member gets their own ClawdBot instance with separate gateway, upload 
 | `/workspace/*` | Static files from workspace (raw file access) |
 | `/preview/*` | Preview page (renders markdown as HTML, displays media) |
 | `/browse/*` | FileBrowser (web file manager, noauth behind OAuth) |
+| `/canvas/` | Artifacts gallery (lists all HTML/SVG artifacts) |
+| `/canvas/*` | Static files from workspace canvas directory |
 | `/*` (default) | oauth2-proxy → ClawdBot gateway |
 
 #### Content Access
@@ -135,6 +137,7 @@ All DO droplet config is version-controlled in `deploy/`. To rebuild the droplet
 - `deploy/filebrowser-curtis.service` → `/etc/systemd/system/filebrowser-curtis.service`
 - `deploy/control-ui-index.html` → `/opt/clawdbot/dist/control-ui/index.html`
 - `deploy/preview-index.html` → `/opt/preview/index.html`
+- `deploy/canvas-gallery.html` → `/opt/canvas-gallery.html`
 - `deploy/backup-workspaces.sh` → `/opt/backup-workspaces.sh`
 - `deploy/workspace-backup.service` → `/etc/systemd/system/workspace-backup.service`
 - `deploy/workspace-backup.timer` → `/etc/systemd/system/workspace-backup.timer`
@@ -161,6 +164,23 @@ Daily automated backups of both workspaces (`/home/clawdbot/clawd/` and `/home/c
 - **Format:** `seth-YYYY-MM-DD.tar.gz`, `curtis-YYYY-MM-DD.tar.gz`
 - **Manual run:** `systemctl start workspace-backup.service`
 - **Offsite:** Script has rclone sync stub — uncomment after configuring `rclone` with DO Spaces or S3
+
+## Artifacts / Canvas
+ClawdBot creates interactive HTML artifacts (reports, dashboards, presentations) in the `canvas/` directory of each workspace.
+
+- **Gallery:** `https://<subdomain>/canvas/` — lists all artifacts with iframe previews
+- **Direct link:** `https://<subdomain>/canvas/<filename>.html`
+- **Local instance:** `http://127.0.0.1:18789/__clawdbot__/canvas/<filename>.html`
+- Gallery page: `/opt/canvas-gallery.html` (backed up as `deploy/canvas-gallery.html`)
+- AGENTS.md in each workspace instructs ClawdBot to create self-contained HTML with CDN libraries (Chart.js, Mermaid, etc.)
+
+## Browser Control (Playwright)
+Both droplet instances have Playwright Chromium configured for headless browsing.
+
+- **Config:** `browser.enabled: true`, `browser.headless: true`, `browser.noSandbox: true`
+- **Executable:** Per-user Playwright cache at `~/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome`
+- **System deps:** xvfb, fonts installed via `npx playwright install-deps chromium`
+- **CDP port:** 18800 (default)
 
 ## File Types Allowed
 .png, .jpg, .jpeg, .gif, .webp, .svg, .pdf, .txt, .md, .csv, .json, .mp4, .mp3, .wav, .webm
