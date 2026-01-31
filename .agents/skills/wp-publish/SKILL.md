@@ -1,102 +1,211 @@
 ---
 name: wp-publish
-version: 1.0.0
-description: When the user wants to publish content to a WordPress site. Also use when the user mentions "publish to WordPress," "WordPress post," "wp publish," "blog post to WordPress," "create WordPress post," "upload to WordPress," "publish article," "WordPress draft," or "push to WordPress." This skill publishes content via the WordPress REST API, supporting posts, pages, media uploads, categories, tags, featured images, and SEO metadata (Yoast/RankMath). Chains with content-pipeline output.
+version: 2.0.0
+description: When the user wants to publish content to a WordPress site. Also use when the user mentions "publish to WordPress," "WordPress post," "wp publish," "blog post to WordPress," "create WordPress post," "upload to WordPress," "publish article," "WordPress draft," "push to WordPress," "add WordPress site," "list WordPress sites," "remove WordPress site," or "wp sites." This skill publishes content via the WordPress REST API, supporting multiple sites, posts, pages, media uploads, categories, tags, featured images, and SEO metadata (Yoast/RankMath). Chains with content-pipeline output.
 ---
 
 # WordPress Publish
 
-You are an expert WordPress publishing assistant. Your goal is to take content (raw text, HTML, or a content-pipeline artifact) and publish it to a WordPress site via the REST API using `curl`.
+You are an expert WordPress publishing assistant. Your goal is to take content (raw text, HTML, or a content-pipeline artifact) and publish it to one or more WordPress sites via the REST API using `curl`. You support managing multiple WordPress sites per user.
 
 ## Initial Assessment
 
 **Check for product marketing context first:**
 If `.claude/product-marketing-context.md` exists, read it before asking questions. Use that context and only ask for information not already covered or specific to this task.
 
-Before publishing, understand:
+Before doing anything else, **load the site configuration** (see Site Configuration below).
 
-1. **Content Source**
+Then understand:
+
+1. **Which site?** — If the user names a site, use it. If not, use the default. If no sites configured, help them add one.
+
+2. **Content Source**
    - Is this a new post to write from scratch?
    - An existing HTML artifact from content-pipeline (in `~/clawd/canvas/`)?
    - Raw text or markdown to convert?
 
-2. **Publication Settings**
+3. **Publication Settings**
    - Publish immediately, or save as **draft** for review? (default: draft)
    - Post type: post or page?
    - Category and tag assignments?
    - Featured image (upload a file or use existing media)?
 
-3. **SEO (if Yoast or RankMath installed)**
+4. **SEO (if Yoast or RankMath installed)**
    - Target keyword?
    - Custom meta title and description?
 
 ---
 
-## Prerequisites
+## Site Configuration
 
-### WordPress Application Password
+### Multi-Site Config File
 
-This skill requires a WordPress Application Password for REST API authentication.
+WordPress sites are stored in `~/clawd/.wp-sites.json`. Each ClawdBot user (Seth, Curtis, etc.) has their own file in their own workspace — no shared credentials.
 
-**To create one:**
-1. Log into WordPress Admin > Users > Profile
-2. Scroll to "Application Passwords"
-3. Enter a name (e.g., "ClawdBot") and click "Add New Application Password"
-4. Copy the generated password (spaces included)
-
-### Environment Variables (auto-configured)
-
-WordPress credentials are pre-configured in `clawdbot.json` under `skills.entries.wp-publish.env`. ClawdBot automatically injects them as environment variables — **the user does NOT need to provide credentials in the chat prompt**.
-
-| Variable | Description |
-|---|---|
-| `WP_SITE_URL` | WordPress site URL (no trailing slash) |
-| `WP_USERNAME` | WordPress username |
-| `WP_APP_PASSWORD` | Application password (with spaces) |
-
-**At the start of every wp-publish invocation, read the credentials from env:**
+**At the start of every wp-publish invocation, read the config:**
 ```bash
-# Read pre-configured credentials — do NOT ask the user for these
-echo "WP_SITE_URL=$WP_SITE_URL"
-echo "WP_USERNAME=$WP_USERNAME"
-echo "WP_APP_PASSWORD is $([ -n "$WP_APP_PASSWORD" ] && echo 'set' || echo 'NOT SET')"
+cat ~/clawd/.wp-sites.json 2>/dev/null || echo '{"sites":{}}'
 ```
 
-If any variable is empty, tell the user to configure them in `clawdbot.json`:
+**Config file format:**
 ```json
 {
-  "skills": {
-    "entries": {
-      "wp-publish": {
-        "enabled": true,
-        "env": {
-          "WP_SITE_URL": "https://example.com",
-          "WP_USERNAME": "admin",
-          "WP_APP_PASSWORD": "xxxx xxxx xxxx xxxx xxxx xxxx"
-        }
-      }
+  "default": "memberpress",
+  "sites": {
+    "memberpress": {
+      "url": "https://801website.com/membepress",
+      "username": "seth",
+      "app_password": "xxxx xxxx xxxx xxxx xxxx xxxx",
+      "description": "MemberPress test site"
+    },
+    "sethshoultes": {
+      "url": "https://sethshoultes.com",
+      "username": "admin",
+      "app_password": "yyyy yyyy yyyy yyyy yyyy yyyy",
+      "description": "Personal blog"
+    },
+    "caseproof": {
+      "url": "https://caseproof.com",
+      "username": "seth",
+      "app_password": "zzzz zzzz zzzz zzzz zzzz zzzz",
+      "description": "Company site"
     }
   }
 }
 ```
 
-If the user provides credentials in the prompt (override), use those instead.
+### Fallback: Environment Variables
 
-**Verify connectivity before publishing:**
+If `~/clawd/.wp-sites.json` doesn't exist or is empty, fall back to env vars from `clawdbot.json`:
+```bash
+echo "WP_SITE_URL=$WP_SITE_URL"
+echo "WP_USERNAME=$WP_USERNAME"
+echo "WP_APP_PASSWORD is $([ -n "$WP_APP_PASSWORD" ] && echo 'set' || echo 'NOT SET')"
+```
+
+If env vars are set, treat them as a single site named "default".
+
+### Inline Override
+
+If the user provides credentials directly in the chat prompt, use those instead of config file or env vars.
+
+### Site Selection
+
+When the user invokes wp-publish:
+1. If they name a site (e.g., "publish to memberpress"), use that site
+2. If they don't name a site and there's a `default`, use the default
+3. If they don't name a site and there's no default but only one site, use that one
+4. If there are multiple sites and no default, **list available sites and ask which one**
+
+---
+
+## Site Management Commands
+
+The user can manage their WordPress sites through natural language. When they ask to add, remove, list, or update sites, handle it directly.
+
+### List Sites
+
+When the user asks to list, show, or view their WordPress sites:
+
+```bash
+cat ~/clawd/.wp-sites.json 2>/dev/null | jq '{default, sites: (.sites | to_entries | map({key, url: .value.url, description: .value.description}))}'
+```
+
+Display as a formatted list:
+```
+WordPress Sites:
+  * memberpress (default) — https://801website.com/membepress — MemberPress test site
+    sethshoultes — https://sethshoultes.com — Personal blog
+    caseproof — https://caseproof.com — Company site
+```
+
+### Add a Site
+
+When the user asks to add a WordPress site, collect:
+- **Site name** (short, no spaces, used as key — e.g., "memberpress", "myblog")
+- **URL** (no trailing slash)
+- **Username**
+- **Application Password** (with spaces)
+- **Description** (optional, one-liner)
+- **Set as default?**
+
+Then write to the config:
+```bash
+# Read existing config (or create empty)
+CONFIG=$(cat ~/clawd/.wp-sites.json 2>/dev/null || echo '{"sites":{}}')
+
+# Add the new site using jq
+echo "$CONFIG" | jq --arg name "SITE_NAME" \
+  --arg url "https://example.com" \
+  --arg user "admin" \
+  --arg pass "xxxx xxxx xxxx xxxx xxxx xxxx" \
+  --arg desc "Site description" \
+  '.sites[$name] = {url: $url, username: $user, app_password: $pass, description: $desc}' \
+  > ~/clawd/.wp-sites.json
+
+# Optionally set as default
+echo "$CONFIG" | jq '.default = "SITE_NAME"' > /tmp/wp-sites-tmp.json && mv /tmp/wp-sites-tmp.json ~/clawd/.wp-sites.json
+```
+
+After adding, verify connectivity:
 ```bash
 curl -s -o /dev/null -w "%{http_code}" \
-  "${WP_SITE_URL}/wp-json/wp/v2/posts?per_page=1" \
-  -u "${WP_USERNAME}:${WP_APP_PASSWORD}"
+  "URL/wp-json/wp/v2/posts?per_page=1" \
+  -u "USERNAME:APP_PASSWORD"
 ```
-Expected: `200`. If `401`, the credentials are wrong. If connection refused, check the URL.
+
+### Remove a Site
+
+```bash
+CONFIG=$(cat ~/clawd/.wp-sites.json)
+echo "$CONFIG" | jq 'del(.sites["SITE_NAME"])' > ~/clawd/.wp-sites.json
+```
+
+If the removed site was the default, clear the default and tell the user.
+
+### Set Default Site
+
+```bash
+CONFIG=$(cat ~/clawd/.wp-sites.json)
+echo "$CONFIG" | jq '.default = "SITE_NAME"' > ~/clawd/.wp-sites.json
+```
+
+### Test All Sites
+
+When the user asks to test connections:
+```bash
+CONFIG=$(cat ~/clawd/.wp-sites.json)
+for site in $(echo "$CONFIG" | jq -r '.sites | keys[]'); do
+  URL=$(echo "$CONFIG" | jq -r ".sites[\"$site\"].url")
+  USER=$(echo "$CONFIG" | jq -r ".sites[\"$site\"].username")
+  PASS=$(echo "$CONFIG" | jq -r ".sites[\"$site\"].app_password")
+  CODE=$(curl -s -o /dev/null -w "%{http_code}" "$URL/wp-json/wp/v2/posts?per_page=1" -u "$USER:$PASS")
+  echo "$site: $URL — $CODE"
+done
+```
 
 ---
 
 ## Core Workflow
 
+### Step 0: Load Site Config
+
+Read `~/clawd/.wp-sites.json` and select the target site (see Site Selection above). Set variables for the rest of the workflow:
+```bash
+CONFIG=$(cat ~/clawd/.wp-sites.json 2>/dev/null || echo '{"sites":{}}')
+SITE_NAME="the-selected-site"
+WP_SITE_URL=$(echo "$CONFIG" | jq -r ".sites[\"$SITE_NAME\"].url")
+WP_USERNAME=$(echo "$CONFIG" | jq -r ".sites[\"$SITE_NAME\"].username")
+WP_APP_PASSWORD=$(echo "$CONFIG" | jq -r ".sites[\"$SITE_NAME\"].app_password")
+```
+
 ### Step 1: Validate Connection
 
-Run the connectivity check above. If it fails, stop and tell the user to verify their WordPress credentials.
+```bash
+curl -s -o /dev/null -w "%{http_code}" \
+  "${WP_SITE_URL}/wp-json/wp/v2/posts?per_page=1" \
+  -u "${WP_USERNAME}:${WP_APP_PASSWORD}"
+```
 
 Also check which plugins are available for SEO:
 ```bash
@@ -237,6 +346,7 @@ curl -s -X POST "${WP_SITE_URL}/wp-json/wp/v2/posts/{POST_ID}" \
 
 After creating the post, report back to the user:
 
+- **Site:** Which WordPress site was used (by name)
 - **Post ID:** The WordPress post ID
 - **Status:** Draft, Published, or Pending Review
 - **Edit URL:** `${WP_SITE_URL}/wp-admin/post.php?post={POST_ID}&action=edit`
@@ -254,10 +364,10 @@ If status is `draft`, remind the user: "The post is saved as a draft. Log into W
 When chaining with the content-pipeline skill:
 
 1. User runs content-pipeline to create an article → HTML saved to `~/clawd/canvas/article-*.html`
-2. User invokes wp-publish, referencing the artifact
+2. User invokes wp-publish, referencing the artifact and optionally naming a target site
 3. wp-publish reads the HTML, extracts the article body, title, and excerpt
 4. Converts inline-styled HTML to Gutenberg blocks (strip `<style>` tags, keep semantic HTML)
-5. Creates the WordPress post as a draft
+5. Creates the WordPress post as a draft on the selected site
 6. Reports the draft URL for review
 
 **Conversion rules for content-pipeline HTML:**
@@ -270,6 +380,20 @@ When chaining with the content-pipeline skill:
 - Strip all `<style>`, `<script>`, `<header>`, `<footer>`, `<nav>` tags
 - Strip inline `style` attributes
 - Preserve `<a>` links, `<strong>`, `<em>` formatting
+
+---
+
+## Publishing to Multiple Sites
+
+The user can publish the same content to multiple sites in one request:
+
+"Publish this article to memberpress and sethshoultes as drafts"
+
+For each site:
+1. Load credentials from the config
+2. Create categories/tags if needed (each site has its own)
+3. Create the post
+4. Report results for each site
 
 ---
 
@@ -292,6 +416,7 @@ Pages don't support categories or tags but do support `parent` (page hierarchy) 
 
 ### Chat Summary
 After publishing, provide:
+- Site name and URL
 - Post title and status
 - WordPress edit URL and preview URL
 - Categories and tags assigned
@@ -305,9 +430,9 @@ After publishing, provide:
 
 | HTTP Code | Meaning | Fix |
 |---|---|---|
-| 401 | Authentication failed | Check WP_USERNAME and WP_APP_PASSWORD |
+| 401 | Authentication failed | Check username and app_password in wp-sites.json |
 | 403 | Insufficient permissions | User needs Editor or Administrator role |
-| 404 | Endpoint not found | Check WP_SITE_URL, ensure REST API is enabled |
+| 404 | Endpoint not found | Check site URL, ensure REST API is enabled |
 | 400 | Bad request | Check JSON syntax, required fields |
 | 413 | File too large | Reduce image size before uploading |
 | 500 | Server error | Check WordPress error logs |
@@ -318,12 +443,13 @@ If the REST API returns an error, show the full error response to the user and s
 
 ## Task-Specific Questions
 
-1. What content should be published? (topic, existing file, or content-pipeline artifact)
-2. Post or page?
-3. Publish immediately or save as draft? (default: draft)
-4. Categories and tags to assign?
-5. Featured image to upload?
-6. SEO keyword and meta description? (if Yoast/RankMath installed)
+1. Which WordPress site? (if multiple configured and none specified)
+2. What content should be published? (topic, existing file, or content-pipeline artifact)
+3. Post or page?
+4. Publish immediately or save as draft? (default: draft)
+5. Categories and tags to assign?
+6. Featured image to upload?
+7. SEO keyword and meta description? (if Yoast/RankMath installed)
 
 ---
 
