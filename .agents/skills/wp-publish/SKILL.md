@@ -1,6 +1,6 @@
 ---
 name: wp-publish
-version: 2.0.0
+version: 2.1.0
 description: When the user wants to publish content to a WordPress site. Also use when the user mentions "publish to WordPress," "WordPress post," "wp publish," "blog post to WordPress," "create WordPress post," "upload to WordPress," "publish article," "WordPress draft," "push to WordPress," "add WordPress site," "list WordPress sites," "remove WordPress site," or "wp sites." This skill publishes content via the WordPress REST API, supporting multiple sites, posts, pages, media uploads, categories, tags, featured images, and SEO metadata (Yoast/RankMath). Chains with content-pipeline output.
 ---
 
@@ -28,7 +28,7 @@ Then understand:
    - Publish immediately, or save as **draft** for review? (default: draft)
    - Post type: post or page?
    - Category and tag assignments?
-   - Featured image (upload a file or use existing media)?
+   - Featured image: **always generate one automatically** unless the user says "no image" or provides their own file
 
 4. **SEO (if Yoast or RankMath installed)**
    - Target keyword?
@@ -270,19 +270,72 @@ curl -s -X POST "${WP_SITE_URL}/wp-json/wp/v2/tags" \
   -d '{"name": "Tag Name"}'
 ```
 
-### Step 4: Upload Featured Image (if provided)
+### Step 4: Generate & Upload Featured Image
+
+**Always generate a featured image** unless the user explicitly says "no image" or provides their own image file.
+
+**4a. Craft the image prompt:**
+
+Based on the post title and content, create a descriptive image generation prompt:
+- Describe a scene that visually represents the article's main topic
+- Style: professional illustration, modern, clean, suitable for a blog header
+- Orientation: landscape (wider than tall — ideal for WordPress featured images and social sharing)
+- Avoid: text/words in the image, faces of real people, brand logos
+
+**Prompt pattern:**
+```
+professional illustration of [topic visual metaphor], [2-3 style details], [color palette], modern digital art style, clean composition, landscape orientation, suitable for blog featured image
+```
+
+**4b. Generate the image:**
+
+Spawn a subagent to generate the image:
+```
+sessions_spawn: "Generate a single image: [crafted prompt]. Save the output image file to /tmp/wp-featured-image.png"
+```
+
+Wait for the subagent to complete and confirm the image file exists:
+```bash
+ls -la /tmp/wp-featured-image.png 2>/dev/null || ls -la /tmp/wp-featured-image.* 2>/dev/null
+```
+
+If the image was saved to a different path or filename, use whatever path the subagent reported.
+
+**4c. Upload to WordPress media library:**
 
 ```bash
+# Detect the image file (subagent may save as .png, .jpg, or .webp)
+IMG_FILE=$(ls /tmp/wp-featured-image.* 2>/dev/null | head -1)
+IMG_NAME=$(basename "$IMG_FILE")
+IMG_EXT="${IMG_NAME##*.}"
+
+# Map extension to MIME type
+case "$IMG_EXT" in
+  png)  MIME="image/png" ;;
+  jpg|jpeg) MIME="image/jpeg" ;;
+  webp) MIME="image/webp" ;;
+  *)    MIME="image/png" ;;
+esac
+
 curl -s -X POST "${WP_SITE_URL}/wp-json/wp/v2/media" \
   -u "${WP_USERNAME}:${WP_APP_PASSWORD}" \
-  -H "Content-Disposition: attachment; filename=image.jpg" \
-  -H "Content-Type: image/jpeg" \
-  --data-binary @/path/to/image.jpg
+  -H "Content-Disposition: attachment; filename=${IMG_NAME}" \
+  -H "Content-Type: ${MIME}" \
+  --data-binary @"${IMG_FILE}"
 ```
 
 Save the returned `id` for use as `featured_media` in the post.
 
-**Supported image types:** JPEG (`image/jpeg`), PNG (`image/png`), GIF (`image/gif`), WebP (`image/webp`)
+**4d. Set alt text on the uploaded image:**
+
+```bash
+curl -s -X POST "${WP_SITE_URL}/wp-json/wp/v2/media/{MEDIA_ID}" \
+  -u "${WP_USERNAME}:${WP_APP_PASSWORD}" \
+  -H "Content-Type: application/json" \
+  -d '{"alt_text": "Descriptive alt text based on article topic"}'
+```
+
+**If image generation fails:** Continue without a featured image — don't block the post. Tell the user the image failed and they can upload one manually in WordPress.
 
 ### Step 5: Create the Post
 
@@ -352,7 +405,7 @@ After creating the post, report back to the user:
 - **Edit URL:** `${WP_SITE_URL}/wp-admin/post.php?post={POST_ID}&action=edit`
 - **View URL:** The post permalink (from the API response `link` field)
 - **Categories and tags** assigned
-- **Featured image** (if uploaded)
+- **Featured image** (generated prompt, media ID, and alt text)
 - **SEO metadata** (if set)
 
 If status is `draft`, remind the user: "The post is saved as a draft. Log into WordPress to review and publish when ready."
@@ -367,8 +420,9 @@ When chaining with the content-pipeline skill:
 2. User invokes wp-publish, referencing the artifact and optionally naming a target site
 3. wp-publish reads the HTML, extracts the article body, title, and excerpt
 4. Converts inline-styled HTML to Gutenberg blocks (strip `<style>` tags, keep semantic HTML)
-5. Creates the WordPress post as a draft on the selected site
-6. Reports the draft URL for review
+5. Generates a featured image based on the article topic (Step 4 above)
+6. Creates the WordPress post as a draft on the selected site with featured image attached
+7. Reports the draft URL for review
 
 **Conversion rules for content-pipeline HTML:**
 - `<h2>` → `<!-- wp:heading {"level":2} --><h2>text</h2><!-- /wp:heading -->`
@@ -420,9 +474,9 @@ After publishing, provide:
 - Post title and status
 - WordPress edit URL and preview URL
 - Categories and tags assigned
-- Featured image (if any)
+- Featured image (generated prompt and media ID)
 - SEO metadata summary (if set)
-- Next steps (review draft, add images, publish)
+- Next steps (review draft, publish)
 
 ---
 
