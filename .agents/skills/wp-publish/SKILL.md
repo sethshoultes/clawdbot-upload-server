@@ -44,15 +44,43 @@ This skill requires a WordPress Application Password for REST API authentication
 3. Enter a name (e.g., "ClawdBot") and click "Add New Application Password"
 4. Copy the generated password (spaces included)
 
-### Environment Variables
+### Environment Variables (auto-configured)
 
-The following must be set in the ClawdBot environment:
+WordPress credentials are pre-configured in `clawdbot.json` under `skills.entries.wp-publish.env`. ClawdBot automatically injects them as environment variables — **the user does NOT need to provide credentials in the chat prompt**.
 
-| Variable | Description | Example |
-|---|---|---|
-| `WP_SITE_URL` | WordPress site URL (no trailing slash) | `https://example.com` |
-| `WP_USERNAME` | WordPress username | `admin` |
-| `WP_APP_PASSWORD` | Application password (with spaces) | `xxxx xxxx xxxx xxxx xxxx xxxx` |
+| Variable | Description |
+|---|---|
+| `WP_SITE_URL` | WordPress site URL (no trailing slash) |
+| `WP_USERNAME` | WordPress username |
+| `WP_APP_PASSWORD` | Application password (with spaces) |
+
+**At the start of every wp-publish invocation, read the credentials from env:**
+```bash
+# Read pre-configured credentials — do NOT ask the user for these
+echo "WP_SITE_URL=$WP_SITE_URL"
+echo "WP_USERNAME=$WP_USERNAME"
+echo "WP_APP_PASSWORD is $([ -n "$WP_APP_PASSWORD" ] && echo 'set' || echo 'NOT SET')"
+```
+
+If any variable is empty, tell the user to configure them in `clawdbot.json`:
+```json
+{
+  "skills": {
+    "entries": {
+      "wp-publish": {
+        "enabled": true,
+        "env": {
+          "WP_SITE_URL": "https://example.com",
+          "WP_USERNAME": "admin",
+          "WP_APP_PASSWORD": "xxxx xxxx xxxx xxxx xxxx xxxx"
+        }
+      }
+    }
+  }
+}
+```
+
+If the user provides credentials in the prompt (override), use those instead.
 
 **Verify connectivity before publishing:**
 ```bash

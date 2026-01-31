@@ -94,5 +94,17 @@
       "dmPolicy": "allowlist",
       "allowFrom": []
     }
+  },
+  "skills": {
+    "entries": {
+      "wp-publish": {
+        "enabled": true,
+        "env": {
+          "WP_SITE_URL": "<WP_SITE_URL>",
+          "WP_USERNAME": "<WP_USERNAME>",
+          "WP_APP_PASSWORD": "<WP_APP_PASSWORD>"
+        }
+      }
+    }
   }
 }
